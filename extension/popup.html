@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workday Resume Auto-Fill</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 16px 0;
+      color: #1a73e8;
+    }
+    .privacy-notice {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .privacy-notice strong {
+      color: #2e7d32;
+    }
+    .upload-section {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-section:hover {
+      border-color: #1a73e8;
+      background: #f8f9fa;
+    }
+    .upload-section.has-file {
+      border-color: #4caf50;
+      background: #e8f5e9;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover:not(:disabled) {
+      background: #1557b0;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 12px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+    .status.info {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .ai-status {
+      margin-top: 16px;
+      padding: 12px;
+      background: #fff3e0;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .ai-status.ready {
+      background: #e8f5e9;
+    }
+    .ai-status.not-ready {
+      background: #ffebee;
+    }
+    .file-name {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #2e7d32;
+      font-weight: 500;
+    }
+    a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Workday Auto-Fill</h1>
+
+  <div class="privacy-notice">
+    🔒 <strong>100% Private:</strong> Your resume is processed locally in your browser using Chrome's built-in AI. No data is sent to any server.
+  </div>
+
+  <div class="upload-section" id="uploadSection">
+    <div id="uploadPrompt">
+      <p style="margin: 0 0 8px 0; font-weight: 500;">📄 Upload Your Resume</p>
+      <p style="margin: 0; font-size: 13px; color: #666;">PDF, DOC, or DOCX</p>
+    </div>
+    <div id="fileInfo" style="display: none;">
+      <p style="margin: 0; font-weight: 500;">✅ Resume Loaded</p>
+      <p class="file-name" id="fileName"></p>
+    </div>
+    <input type="file" id="resumeFile" accept=".pdf,.doc,.docx,.txt">
+  </div>
+
+  <button id="autofillBtn" disabled>Auto-Fill Workday Form</button>
+
+  <div id="status"></div>
+
+  <div class="ai-status" id="aiStatus">
+    Checking Chrome AI availability...
+  </div>
+
+  <script src="scripts/popup.js"></script>
+</body>
+</html>
