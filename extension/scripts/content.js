@@ -174,7 +174,76 @@ function getFieldLabel(field) {
 function mapDataToField(fieldInfo, data) {
   const type = fieldInfo.type;
 
-  // If we have parsed data, use it
+  // Handle new comprehensive data structure
+  if (data.personal) {
+    switch (type) {
+      // Personal information
+      case 'email':
+        return data.personal.email;
+      case 'phone':
+        return data.personal.phone;
+      case 'firstName':
+        return data.personal.firstName;
+      case 'lastName':
+        return data.personal.lastName;
+      case 'fullName':
+        const first = data.personal.firstName || '';
+        const last = data.personal.lastName || '';
+        return first && last ? `${first} ${last}` : (first || last || null);
+      case 'city':
+        return data.personal.city;
+      case 'state':
+        return data.personal.state;
+      case 'zip':
+        return data.personal.zipCode;
+      case 'country':
+        return data.personal.country;
+      case 'linkedin':
+        return data.personal.linkedin;
+      case 'website':
+        return data.personal.portfolio;
+      case 'github':
+        return data.personal.github;
+
+      // Summary
+      case 'summary':
+        return data.summary;
+
+      // Education (most recent)
+      case 'school':
+        return data.education?.[0]?.school;
+      case 'degree':
+        return data.education?.[0]?.degree;
+      case 'field':
+      case 'major':
+        return data.education?.[0]?.field;
+      case 'graduationDate':
+        return data.education?.[0]?.graduationDate;
+      case 'gpa':
+        return data.education?.[0]?.gpa;
+
+      // Work experience (most recent)
+      case 'company':
+        return data.workExperience?.[0]?.company;
+      case 'jobTitle':
+        return data.workExperience?.[0]?.title;
+      case 'startDate':
+        return data.workExperience?.[0]?.startDate;
+      case 'endDate':
+        return data.workExperience?.[0]?.endDate;
+      case 'jobLocation':
+        return data.workExperience?.[0]?.location;
+
+      // Skills (join array)
+      case 'skills':
+        return data.skills?.length ? data.skills.join(', ') : null;
+
+      default:
+        return null;
+    }
+  }
+
+  // Fallback: handle old data structure (backward compatibility)
   if (data.name || data.email || data.phone) {
     switch (type) {
       case 'email':
@@ -184,27 +253,27 @@ function mapDataToField(fieldInfo, data) {
       case 'fullName':
         return data.name;
       case 'firstName':
-        return data.name ? data.name.split(' ')[0] : '';
+        return data.name ? data.name.split(' ')[0] : null;
       case 'lastName':
-        return data.name ? data.name.split(' ').slice(1).join(' ') : '';
+        return data.name ? data.name.split(' ').slice(1).join(' ') : null;
       case 'city':
-        return data.location ? data.location.split(',')[0].trim() : '';
+        return data.location ? data.location.split(',')[0].trim() : null;
       case 'state':
-        return data.location ? data.location.split(',')[1]?.trim() : '';
+        return data.location ? data.location.split(',')[1]?.trim() : null;
       case 'summary':
-        return data.summary || '';
+        return data.summary || null;
       case 'linkedin':
-        return data.linkedin || '';
+        return data.linkedin || null;
       case 'website':
-        return data.website || '';
+        return data.website || null;
       case 'school':
-        return data.education?.[0]?.school || '';
+        return data.education?.[0]?.school || null;
       case 'degree':
-        return data.education?.[0]?.degree || '';
+        return data.education?.[0]?.degree || null;
       case 'company':
-        return data.experience?.[0]?.company || '';
+        return data.experience?.[0]?.company || null;
       case 'jobTitle':
-        return data.experience?.[0]?.title || '';
+        return data.experience?.[0]?.title || null;
       default:
         return null;
     }
@@ -256,9 +325,31 @@ function extractBasicInfo(text) {
   const emailMatch = text.match(/[\w\.-]+@[\w\.-]+\.\w+/);
   const phoneMatch = text.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
 
+  // Try to extract name (usually first line)
+  const lines = text.split('\n').filter(l => l.trim());
+  const potentialName = lines[0] || '';
+  const nameParts = potentialName.split(' ');
+
   return {
-    email: emailMatch ? emailMatch[0] : null,
-    phone: phoneMatch ? phoneMatch[0] : null,
+    personal: {
+      firstName: nameParts[0] || null,
+      lastName: nameParts.slice(1).join(' ') || null,
+      email: emailMatch ? emailMatch[0] : null,
+      phone: phoneMatch ? phoneMatch[0] : null,
+      city: null,
+      state: null,
+      zipCode: null,
+      country: null,
+      linkedin: null,
+      github: null,
+      portfolio: null
+    },
+    summary: null,
+    workExperience: [],
+    education: [],
+    skills: [],
+    certifications: [],
+    languages: [],
     rawText: text
   };
 }
