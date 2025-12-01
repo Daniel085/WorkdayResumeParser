@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome AI Diagnostics</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+
+    .result {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .result.pass {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      color: #2e7d32;
+    }
+
+    .result.fail {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+    }
+
+    .result.info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1565c0;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+    }
+
+    .btn-big {
+      font-size: 18px;
+      padding: 20px 40px;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+
+    .instructions {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Chrome AI Diagnostics</h1>
+    <p style="color: #666; margin-bottom: 30px;">Let's figure out what's wrong...</p>
+
+    <button class="btn btn-big" onclick="runDiagnostics()">🔬 Run Diagnostics</button>
+
+    <div id="results" style="margin-top: 30px;"></div>
+
+    <div id="instructions" style="display: none;"></div>
+  </div>
+
+  <script>
+    async function runDiagnostics() {
+      const resultsDiv = document.getElementById('results');
+      const instructionsDiv = document.getElementById('instructions');
+
+      resultsDiv.innerHTML = '<div class="result info">Running diagnostics...</div>';
+      instructionsDiv.innerHTML = '';
+      instructionsDiv.style.display = 'none';
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      let html = '<h2 style="color: #333; margin-bottom: 20px;">Diagnostic Results:</h2>';
+      let issues = [];
+
+      // Check 1: Does window.ai exist?
+      if (typeof window.ai !== 'undefined') {
+        html += '<div class="result pass">✅ <strong>window.ai exists</strong></div>';
+      } else {
+        html += '<div class="result fail">❌ <strong>window.ai is undefined</strong><br>This means Chrome AI is not enabled.</div>';
+        issues.push('ai-undefined');
+      }
+
+      // Check 2: Does languageModel exist?
+      if (typeof window.ai !== 'undefined' && window.ai.languageModel) {
+        html += '<div class="result pass">✅ <strong>window.ai.languageModel exists</strong></div>';
+
+        // Check 3: Can we get capabilities?
+        try {
+          const capabilities = await window.ai.languageModel.capabilities();
+          html += '<div class="result pass">✅ <strong>Capabilities accessible</strong></div>';
+
+          // Check 4: Is AI available?
+          if (capabilities.available === 'readily') {
+            html += '<div class="result pass">🎉 <strong>Chrome AI is READY!</strong><br>Status: readily</div>';
+          } else if (capabilities.available === 'after-download') {
+            html += '<div class="result info">⏳ <strong>AI Model is Downloading</strong><br>Status: after-download<br>Wait 2-5 minutes and check again.</div>';
+            issues.push('downloading');
+          } else {
+            html += `<div class="result fail">❌ <strong>AI Not Available</strong><br>Status: ${capabilities.available}</div>`;
+            issues.push('not-available');
+          }
+
+          // Show full capabilities object
+          html += '<div class="result info"><strong>Full Capabilities Object:</strong><pre>' + JSON.stringify(capabilities, null, 2) + '</pre></div>';
+
+        } catch (error) {
+          html += `<div class="result fail">❌ <strong>Error getting capabilities:</strong><br>${error.message}</div>`;
+          issues.push('capabilities-error');
+        }
+
+      } else if (typeof window.ai !== 'undefined') {
+        html += '<div class="result fail">❌ <strong>window.ai.languageModel is undefined</strong></div>';
+        issues.push('languageModel-undefined');
+      }
+
+      // Check Chrome version
+      const userAgent = navigator.userAgent;
+      const chromeVersion = userAgent.match(/Chrome\/(\d+)/);
+      if (chromeVersion) {
+        const version = parseInt(chromeVersion[1]);
+        if (version >= 127) {
+          html += `<div class="result pass">✅ <strong>Chrome version: ${version}</strong> (127+ required)</div>`;
+        } else {
+          html += `<div class="result fail">❌ <strong>Chrome version: ${version}</strong> (need 127+)</div>`;
+          issues.push('old-chrome');
+        }
+      }
+
+      resultsDiv.innerHTML = html;
+
+      // Show instructions based on issues
+      if (issues.length > 0) {
+        showInstructions(issues);
+      } else {
+        instructionsDiv.innerHTML = '<div class="result pass" style="font-size: 18px; padding: 30px;"><strong>🎉 Everything looks good!</strong><br><br>You can now use Chrome AI.<br><br><a href="test-parser.html" style="display: inline-block; background: #4caf50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: 600;">Go to Resume Parser Test</a></div>';
+        instructionsDiv.style.display = 'block';
+      }
+    }
+
+    function showInstructions(issues) {
+      const instructionsDiv = document.getElementById('instructions');
+      let html = '<div class="instructions">';
+
+      if (issues.includes('ai-undefined')) {
+        html += `
+          <h3>🔧 Fix: Enable Chrome AI Flags</h3>
+          <p><strong>The flags are not enabled yet, or Chrome hasn't been relaunched properly.</strong></p>
+
+          <h4>Do This Now:</h4>
+          <ol>
+            <li>
+              <strong>Open Flag #1:</strong> <a href="chrome://flags/#prompt-api-for-gemini-nano" target="_blank">chrome://flags/#prompt-api-for-gemini-nano</a>
+              <br>Set to: <code>Enabled</code>
+            </li>
+            <li>
+              <strong>Open Flag #2:</strong> <a href="chrome://flags/#optimization-guide-on-device-model" target="_blank">chrome://flags/#optimization-guide-on-device-model</a>
+              <br>Set to: <code>Enabled BypassPerfRequirement</code>
+            </li>
+            <li>
+              <strong>CRITICAL:</strong> After changing both flags, scroll to the bottom of the chrome://flags page and click the <strong>blue "Relaunch" button</strong>
+              <br><br>
+              <strong>⚠️ Important:</strong> Don't just close Chrome! You MUST click the Relaunch button.
+            </li>
+            <li>
+              <strong>Wait:</strong> After Chrome relaunches, wait 2-5 minutes for the AI model to download
+            </li>
+            <li>
+              <strong>Test Again:</strong> Come back to this page and click "Run Diagnostics" again
+            </li>
+          </ol>
+        `;
+      } else if (issues.includes('downloading')) {
+        html += `
+          <h3>⏳ AI Model is Downloading</h3>
+          <p><strong>Good news!</strong> Chrome AI is enabled, but the Gemini Nano model is still downloading.</p>
+          <p><strong>What to do:</strong></p>
+          <ul>
+            <li>Wait 2-5 minutes (it's downloading ~1.5GB in the background)</li>
+            <li>You can keep using Chrome while it downloads</li>
+            <li>Click "Run Diagnostics" again in a few minutes</li>
+          </ul>
+          <button class="btn" onclick="runDiagnostics()" style="margin-top: 15px;">🔄 Check Again Now</button>
+        `;
+      } else if (issues.includes('languageModel-undefined')) {
+        html += `
+          <h3>🔧 Partial Setup Detected</h3>
+          <p>window.ai exists but languageModel is undefined. This is unusual.</p>
+          <p><strong>Try this:</strong></p>
+          <ol>
+            <li>Close ALL Chrome windows completely</li>
+            <li>Reopen Chrome</li>
+            <li>Wait 2 minutes</li>
+            <li>Come back here and run diagnostics again</li>
+          </ol>
+        `;
+      }
+
+      html += '</div>';
+      instructionsDiv.innerHTML = html;
+      instructionsDiv.style.display = 'block';
+    }
+
+    // Auto-run on load
+    window.addEventListener('load', () => {
+      setTimeout(runDiagnostics, 500);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enable Chrome AI</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 30px;
+    }
+
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    .step h2 {
+      color: #333;
+      margin-top: 0;
+      font-size: 1.3em;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      margin: 10px 10px 10px 0;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn-success {
+      background: #4caf50;
+    }
+
+    .btn-success:hover {
+      background: #388e3c;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+      font-size: 14px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    ul {
+      line-height: 2;
+    }
+
+    .copy-btn {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .copy-btn:hover {
+      background: #5a6268;
+    }
+
+    .status {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .status.checking {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .status.ready {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.not-ready {
+      background: #ffebee;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Enable Chrome AI (Gemini Nano)</h1>
+
+    <div class="status checking" id="status">
+      Checking Chrome AI status...
+    </div>
+
+    <div class="step">
+      <h2>Step 1: Enable Prompt API Flag</h2>
+      <p>This enables Chrome's built-in AI language model (Gemini Nano).</p>
+      <a href="chrome://flags/#prompt-api-for-gemini-nano" class="btn" target="_blank">
+        🔧 Open Prompt API Flag
+      </a>
+      <p style="margin-top: 15px;">
+        <strong>Set to:</strong> <code>Enabled</code>
+      </p>
+    </div>
+
+    <div class="step">
+      <h2>Step 2: Enable On-Device Model Flag</h2>
+      <p>This allows Chrome to download and use the AI model locally.</p>
+      <a href="chrome://flags/#optimization-guide-on-device-model" class="btn" target="_blank">
+        🔧 Open On-Device Model Flag
+      </a>
+      <p style="margin-top: 15px;">
+        <strong>Set to:</strong> <code>Enabled BypassPerfRequirement</code>
+      </p>
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ Important:</strong> After changing BOTH flags, Chrome will show a "Relaunch" button at the bottom of the flags page. Click it to restart Chrome.
+    </div>
+
+    <div class="step">
+      <h2>Step 3: Verify AI is Working</h2>
+      <p>After restarting Chrome, open DevTools Console (F12 or Cmd+Option+J) and paste this:</p>
+      <code id="testCode" style="display: block; padding: 10px; margin: 10px 0;">
+        (await window.ai?.languageModel.capabilities())?.available
+      </code>
+      <button class="copy-btn" onclick="copyCode()">Copy Code</button>
+
+      <p style="margin-top: 15px;">
+        <strong>Expected result:</strong>
+      </p>
+      <ul>
+        <li><code>"readily"</code> = ✅ AI is ready to use!</li>
+        <li><code>"after-download"</code> = ⏳ Model is downloading (wait a few minutes)</li>
+        <li><code>undefined</code> = ❌ Flags not enabled correctly</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <h2>Step 4: Test the Parser</h2>
+      <p>Once AI is ready, go back to the test page:</p>
+      <a href="test-parser.html" class="btn btn-success">
+        🧪 Open Resume Parser Test
+      </a>
+    </div>
+
+    <div class="success" style="margin-top: 30px;">
+      <strong>💡 Pro Tip:</strong> The first time you use Chrome AI, it may download the Gemini Nano model (~1.5GB). This happens in the background and can take 5-10 minutes depending on your connection.
+    </div>
+  </div>
+
+  <script>
+    // Check AI status on load
+    checkAIStatus();
+
+    async function checkAIStatus() {
+      const statusEl = document.getElementById('status');
+
+      try {
+        if (window.ai && window.ai.languageModel) {
+          const capabilities = await window.ai.languageModel.capabilities();
+
+          if (capabilities.available === 'readily') {
+            statusEl.className = 'status ready';
+            statusEl.innerHTML = '✅ <strong>Chrome AI is Ready!</strong> You can skip the steps below and go directly to testing.';
+          } else if (capabilities.available === 'after-download') {
+            statusEl.className = 'status not-ready';
+            statusEl.innerHTML = '⏳ <strong>AI Model is Downloading...</strong> The Gemini Nano model is being downloaded. This may take 5-10 minutes. Check back soon!';
+          } else {
+            statusEl.className = 'status not-ready';
+            statusEl.innerHTML = '❌ <strong>Chrome AI Not Available</strong> - Follow the steps below to enable it.';
+          }
+        } else {
+          statusEl.className = 'status not-ready';
+          statusEl.innerHTML = '❌ <strong>Chrome AI Not Available</strong> - Follow the steps below to enable it.';
+        }
+      } catch (error) {
+        statusEl.className = 'status not-ready';
+        statusEl.innerHTML = '❌ <strong>Chrome AI Not Available</strong> - Follow the steps below to enable it.';
+      }
+    }
+
+    function copyCode() {
+      const code = document.getElementById('testCode').textContent;
+      navigator.clipboard.writeText(code);
+
+      const btn = event.target;
+      btn.textContent = 'Copied!';
+      setTimeout(() => {
+        btn.textContent = 'Copy Code';
+      }, 2000);
+    }
+
+    // Recheck every 30 seconds in case model downloads
+    setInterval(checkAIStatus, 30000);
+  </script>
+</body>
+</html>

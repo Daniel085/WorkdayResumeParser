@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Channel Check</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+
+    .alert {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .alert.error {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+    }
+
+    .alert.success {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      color: #2e7d32;
+    }
+
+    .alert.warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+    }
+
+    .alert.info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1565c0;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 10px 10px 10px 0;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+    }
+
+    .btn-success {
+      background: #4caf50;
+    }
+
+    .btn-success:hover {
+      background: #388e3c;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+    }
+
+    .solution {
+      background: #f8f9fa;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .solution h3 {
+      color: #667eea;
+      margin-top: 0;
+    }
+
+    ul {
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Chrome Channel Detection</h1>
+    <p style="color: #666; margin-bottom: 30px;">Let's figure out why Chrome AI isn't working...</p>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    function detectChromeChannel() {
+      const resultsDiv = document.getElementById('results');
+      const userAgent = navigator.userAgent;
+
+      // Get Chrome version
+      const chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+      const chromeVersion = chromeMatch ? parseInt(chromeMatch[1]) : 0;
+
+      // Detect channel
+      let channel = 'Unknown';
+      let isStable = false;
+
+      if (userAgent.includes('Chrome/') && !userAgent.includes('Edg/')) {
+        if (userAgent.includes('Canary')) {
+          channel = 'Chrome Canary';
+        } else if (userAgent.includes('Dev')) {
+          channel = 'Chrome Dev';
+        } else if (userAgent.includes('Beta')) {
+          channel = 'Chrome Beta';
+        } else {
+          channel = 'Chrome Stable';
+          isStable = true;
+        }
+      }
+
+      let html = `
+        <div class="alert info">
+          <strong>Browser Detected:</strong><br>
+          <strong>Channel:</strong> ${channel}<br>
+          <strong>Version:</strong> ${chromeVersion}<br>
+          <br>
+          <strong>User Agent:</strong><br>
+          <code style="display: block; margin-top: 10px; word-break: break-all;">${userAgent}</code>
+        </div>
+      `;
+
+      // Check if window.ai exists
+      const hasAI = typeof window.ai !== 'undefined';
+
+      if (hasAI) {
+        html += `
+          <div class="alert success">
+            <strong>✅ Great News!</strong><br>
+            window.ai is available! Chrome AI should work.
+          </div>
+        `;
+      } else if (isStable) {
+        html += `
+          <div class="alert error">
+            <strong>❌ Found the Problem!</strong><br><br>
+            <strong>You're using Chrome Stable v${chromeVersion}</strong><br><br>
+            Chrome AI (Gemini Nano) is currently a <strong>preview feature</strong> that's only available in:<br>
+            • Chrome Canary<br>
+            • Chrome Dev<br>
+            • Chrome Beta<br>
+            <br>
+            It's NOT available in Chrome Stable yet, even though your version (${chromeVersion}) is above the minimum (127).
+          </div>
+
+          <div class="solution">
+            <h3>💡 Solution: Install Chrome Canary</h3>
+            <p><strong>Chrome Canary</strong> is Google's experimental version that gets new features first. You can install it alongside Chrome Stable (they won't conflict).</p>
+
+            <h4>Option 1: Download Chrome Canary</h4>
+            <ol>
+              <li>Download: <a href="https://www.google.com/chrome/canary/" target="_blank">https://www.google.com/chrome/canary/</a></li>
+              <li>Install it (installs as separate app)</li>
+              <li>Open Chrome Canary</li>
+              <li>Enable the two flags in Canary:
+                <ul>
+                  <li>chrome://flags/#prompt-api-for-gemini-nano → Enabled</li>
+                  <li>chrome://flags/#optimization-guide-on-device-model → Enabled BypassPerfRequirement</li>
+                </ul>
+              </li>
+              <li>Click Relaunch</li>
+              <li>Wait 2-5 minutes for model download</li>
+              <li>Open this folder in Canary: <code>file://${window.location.pathname.replace('/check-chrome-channel.html', '')}</code></li>
+            </ol>
+
+            <a href="https://www.google.com/chrome/canary/" class="btn" target="_blank">📥 Download Chrome Canary</a>
+
+            <h4 style="margin-top: 30px;">Option 2: Use Without AI (Works Now!)</h4>
+            <p>Our extension can still work without AI using regex-based parsing. It won't be as smart, but it can still extract:</p>
+            <ul>
+              <li>✅ Email addresses</li>
+              <li>✅ Phone numbers</li>
+              <li>✅ Names (basic extraction)</li>
+              <li>✅ PDF text extraction</li>
+            </ul>
+
+            <a href="test-pdf-only.html" class="btn btn-success">🧪 Test PDF Extraction (No AI)</a>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="alert error">
+            <strong>❌ Chrome AI Not Available</strong><br><br>
+            Even though you're using ${channel} v${chromeVersion}, window.ai is not available.<br><br>
+            <strong>Possible reasons:</strong>
+            <ul style="margin-top: 10px;">
+              <li>Flags not enabled correctly</li>
+              <li>Chrome needs to be fully relaunched</li>
+              <li>AI model hasn't downloaded yet</li>
+              <li>System requirements not met (need 22GB free space, 4GB GPU)</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      // Show what we recommend
+      if (!hasAI) {
+        html += `
+          <div class="alert warning">
+            <strong>⚠️ Recommendation</strong><br><br>
+            ${isStable ?
+              'Since Chrome AI requires Chrome Canary/Dev/Beta, we recommend:<br>1. Install Chrome Canary (5 minutes)<br>2. OR use the extension without AI (works now but less accurate)' :
+              'Make sure both flags are enabled and Chrome has been relaunched using the Relaunch button.'
+            }
+          </div>
+        `;
+      }
+
+      resultsDiv.innerHTML = html;
+    }
+
+    // Run on load
+    detectChromeChannel();
+  </script>
+</body>
+</html>

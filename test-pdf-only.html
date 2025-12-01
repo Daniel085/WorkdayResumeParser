@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Text Extraction Test (No AI Required)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+    }
+
+    .upload-zone {
+      border: 3px dashed #667eea;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f8f9fa;
+    }
+
+    .upload-zone:hover {
+      background: #e9ecef;
+      border-color: #764ba2;
+    }
+
+    .upload-zone.dragging {
+      background: #d4edff;
+      border-color: #667eea;
+      transform: scale(1.02);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 10px 5px;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: none;
+    }
+
+    .status.info {
+      background: #e3f2fd;
+      color: #1565c0;
+      display: block;
+    }
+
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-card .number {
+      font-size: 2em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-card .label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .notice {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📄 PDF Text Extraction Test</h1>
+
+    <div class="notice">
+      ℹ️ <strong>No AI Required!</strong> This page tests PDF text extraction only. To test full resume parsing with AI, enable Chrome AI first.
+    </div>
+
+    <div class="card">
+      <h2>Upload PDF Resume</h2>
+      <div class="upload-zone" id="uploadZone">
+        <div style="font-size: 48px; margin-bottom: 10px;">📄</div>
+        <p><strong>Drop a PDF here</strong></p>
+        <p style="margin-top: 10px; color: #666;">or click to browse</p>
+        <input type="file" id="fileInput" accept=".pdf">
+      </div>
+
+      <div style="margin-top: 20px;">
+        <button class="btn" onclick="loadSample('workday')">Test: resume-workday.pdf</button>
+        <button class="btn" onclick="loadSample('zillow')">Test: resume-zillow-2.pdf</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="results" style="display: none;">
+      <h2>✅ Extraction Results</h2>
+
+      <div class="stats" id="stats"></div>
+
+      <h3 style="margin-top: 20px; margin-bottom: 15px;">Extracted Text:</h3>
+      <pre id="textOutput"></pre>
+
+      <h3 style="margin-top: 20px; margin-bottom: 15px;">Basic Info (Regex Extraction):</h3>
+      <pre id="basicInfo"></pre>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Configure PDF.js
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // Upload handlers
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragging');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragging');
+    });
+
+    uploadZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragging');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        await processFile(file);
+      } else {
+        showStatus('Please drop a PDF file', 'error');
+      }
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await processFile(file);
+      }
+    });
+
+    // Process file
+    async function processFile(file) {
+      showStatus(`Extracting text from ${file.name}...`, 'info');
+
+      try {
+        const text = await extractTextFromPDF(file);
+
+        // Show results
+        displayResults(text, file.name);
+        showStatus(`✅ Successfully extracted ${text.length.toLocaleString()} characters from ${file.name}`, 'success');
+
+      } catch (error) {
+        showStatus(`❌ Error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    // Extract text from PDF
+    async function extractTextFromPDF(file) {
+      return new Promise(async (resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target.result;
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+            console.log(`PDF loaded: ${pdf.numPages} pages`);
+
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              fullText += `\n\n=== PAGE ${i} ===\n\n` + pageText;
+            }
+
+            resolve(fullText.trim());
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.onerror = () => reject(new Error('Failed to read PDF'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // Display results
+    function displayResults(text, filename) {
+      // Extract basic info with regex
+      const basicInfo = extractBasicInfo(text);
+
+      // Show stats
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-card">
+          <div class="number">${text.length.toLocaleString()}</div>
+          <div class="label">Characters</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">${text.split(/\s+/).length.toLocaleString()}</div>
+          <div class="label">Words</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">${text.split('\n').length.toLocaleString()}</div>
+          <div class="label">Lines</div>
+        </div>
+      `;
+
+      // Show text
+      document.getElementById('textOutput').textContent = text;
+
+      // Show basic info
+      document.getElementById('basicInfo').textContent = JSON.stringify(basicInfo, null, 2);
+
+      // Show results
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Extract basic info with regex (fallback parser)
+    function extractBasicInfo(text) {
+      const emailMatch = text.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+      const phoneMatch = text.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
+
+      // Try to extract name (first non-empty line)
+      const lines = text.split('\n').filter(l => l.trim());
+      const potentialName = lines[0] || '';
+
+      // Extract URLs
+      const urlMatches = text.match(/https?:\/\/[^\s]+/g) || [];
+      const linkedin = urlMatches.find(url => url.includes('linkedin')) || null;
+      const github = urlMatches.find(url => url.includes('github')) || null;
+
+      // Look for common keywords
+      const hasExperience = text.toLowerCase().includes('experience');
+      const hasEducation = text.toLowerCase().includes('education');
+      const hasSkills = text.toLowerCase().includes('skills');
+
+      return {
+        name: potentialName,
+        email: emailMatch ? emailMatch[0] : null,
+        phone: phoneMatch ? phoneMatch[0] : null,
+        linkedin: linkedin,
+        github: github,
+        sections: {
+          experience: hasExperience,
+          education: hasEducation,
+          skills: hasSkills
+        }
+      };
+    }
+
+    // Load sample resume
+    async function loadSample(type) {
+      const filename = type === 'workday' ? 'resume-workday.pdf' : 'resume-zillow-2.pdf';
+      showStatus(`Loading ${filename}...`, 'info');
+
+      try {
+        const response = await fetch(`Resume Samples/${filename}`);
+        if (!response.ok) throw new Error('File not found');
+
+        const blob = await response.blob();
+        const file = new File([blob], filename, { type: 'application/pdf' });
+
+        await processFile(file);
+      } catch (error) {
+        showStatus(`❌ Error loading sample: ${error.message}`, 'error');
+      }
+    }
+
+    // Show status
+    function showStatus(message, type) {
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.className = `status ${type}`;
+    }
+  </script>
+</body>
+</html>

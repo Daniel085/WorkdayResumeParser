@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fix Chrome AI - Troubleshooting Guide</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .error-box {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-family: 'Courier New', monospace;
+      color: #c62828;
+    }
+
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+
+    .step h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.3em;
+    }
+
+    .step-number {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 10px 10px 10px 0;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s;
+    }
+
+    .btn-test {
+      background: #4caf50;
+    }
+
+    .btn-test:hover {
+      background: #388e3c;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+      font-size: 14px;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      padding: 12px;
+      margin: 8px 0;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .checklist li:hover {
+      border-color: #667eea;
+      background: #f8f9fa;
+    }
+
+    .checklist li.done {
+      border-color: #4caf50;
+      background: #e8f5e9;
+    }
+
+    .checklist li::before {
+      content: "☐ ";
+      font-size: 20px;
+      margin-right: 10px;
+    }
+
+    .checklist li.done::before {
+      content: "✅ ";
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .success {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .status-box {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-weight: 500;
+    }
+
+    .status-box.checking {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .status-box.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .status-box.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+
+    .copy-btn {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .copy-btn:hover {
+      background: #5a6268;
+    }
+
+    .recheck-btn {
+      background: #2196f3;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .recheck-btn:hover {
+      background: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Fix Chrome AI</h1>
+    <p style="color: #666; margin-bottom: 30px;">You got this error: <code>Cannot read properties of undefined (reading 'languageModel')</code></p>
+
+    <div class="error-box">
+      ❌ window.ai is undefined
+      <br><br>
+      <strong>This means:</strong> Chrome AI is not enabled yet.
+    </div>
+
+    <div class="status-box checking" id="currentStatus">
+      Checking current AI status...
+    </div>
+
+    <h2 style="color: #333; margin-top: 40px;">Follow These Steps:</h2>
+
+    <div class="step">
+      <h2><span class="step-number">1</span> Enable Flag #1: Prompt API</h2>
+      <p>Click this link to open the flag page in a new tab:</p>
+      <a href="chrome://flags/#prompt-api-for-gemini-nano" class="btn" target="_blank" onclick="markDone(0)">
+        🔧 Open Prompt API Flag
+      </a>
+      <div style="margin-top: 15px;">
+        <strong>On that page:</strong>
+        <ol>
+          <li>Find the dropdown (currently says "Default")</li>
+          <li>Change it to: <code>Enabled</code></li>
+          <li>Don't close the tab yet!</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2><span class="step-number">2</span> Enable Flag #2: On-Device Model</h2>
+      <p>Click this link to open the second flag:</p>
+      <a href="chrome://flags/#optimization-guide-on-device-model" class="btn" target="_blank" onclick="markDone(1)">
+        🔧 Open On-Device Model Flag
+      </a>
+      <div style="margin-top: 15px;">
+        <strong>On that page:</strong>
+        <ol>
+          <li>Find the dropdown (currently says "Default")</li>
+          <li>Change it to: <code>Enabled BypassPerfRequirement</code></li>
+          <li>Look for a <strong>blue "Relaunch" button</strong> at the bottom of the page</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2><span class="step-number">3</span> Relaunch Chrome</h2>
+      <div class="warning">
+        ⚠️ <strong>CRITICAL STEP:</strong> You MUST click the blue "Relaunch" button that appears at the bottom of the chrome://flags page. Just closing and reopening Chrome won't work!
+      </div>
+      <p>After you change BOTH flags, Chrome will show a blue button at the bottom that says <code>Relaunch</code>.</p>
+      <p><strong>Click that button.</strong> Chrome will close and reopen with AI enabled.</p>
+    </div>
+
+    <div class="step">
+      <h2><span class="step-number">4</span> Wait for Model Download (First Time Only)</h2>
+      <p>After Chrome relaunches, it needs to download Gemini Nano (~1.5GB). This happens automatically in the background.</p>
+      <div style="margin-top: 15px;">
+        <strong>Expected wait time:</strong>
+        <ul>
+          <li>Fast connection: 2-5 minutes</li>
+          <li>Slow connection: 5-15 minutes</li>
+        </ul>
+      </div>
+      <p style="margin-top: 15px;">You can continue using Chrome while it downloads.</p>
+    </div>
+
+    <div class="step">
+      <h2><span class="step-number">5</span> Verify It's Working</h2>
+      <p>After Chrome relaunches and waits a few minutes, test if AI is ready:</p>
+
+      <button class="recheck-btn" onclick="recheckAI()">🔄 Check AI Status Now</button>
+
+      <div id="recheckResult" style="margin-top: 15px;"></div>
+
+      <p style="margin-top: 20px;"><strong>Or manually check:</strong></p>
+      <ol>
+        <li>Open DevTools: <code>Cmd + Option + J</code> (Mac) or <code>F12</code> (Windows/Linux)</li>
+        <li>Go to the <strong>Console</strong> tab</li>
+        <li>Paste this code:</li>
+      </ol>
+
+      <pre id="testCode">(await window.ai?.languageModel.capabilities())?.available</pre>
+      <button class="copy-btn" onclick="copyTestCode()">📋 Copy Code</button>
+
+      <div style="margin-top: 15px;">
+        <strong>What you should see:</strong>
+        <ul>
+          <li><code>"readily"</code> = ✅ AI is ready!</li>
+          <li><code>"after-download"</code> = ⏳ Model is downloading (wait a bit longer)</li>
+          <li><code>undefined</code> = ❌ Flags not enabled or Chrome not relaunched</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="success" style="margin-top: 30px; display: none;" id="successMessage">
+      <strong>🎉 Success!</strong> Chrome AI is now enabled. You can now use the resume parser with AI!
+      <div style="margin-top: 15px;">
+        <a href="test-parser.html" class="btn btn-test">🧪 Go to Resume Parser Test</a>
+      </div>
+    </div>
+
+    <h2 style="color: #333; margin-top: 40px;">Checklist - Mark as you complete:</h2>
+    <ul class="checklist">
+      <li onclick="toggleCheck(this)">Opened Prompt API flag page</li>
+      <li onclick="toggleCheck(this)">Changed to "Enabled"</li>
+      <li onclick="toggleCheck(this)">Opened On-Device Model flag page</li>
+      <li onclick="toggleCheck(this)">Changed to "Enabled BypassPerfRequirement"</li>
+      <li onclick="toggleCheck(this)">Clicked blue "Relaunch" button</li>
+      <li onclick="toggleCheck(this)">Chrome restarted</li>
+      <li onclick="toggleCheck(this)">Waited 2-5 minutes</li>
+      <li onclick="toggleCheck(this)">Verified AI is working</li>
+    </ul>
+
+    <div class="warning" style="margin-top: 30px;">
+      <strong>Still not working?</strong>
+      <p>If you've done all steps and still get errors:</p>
+      <ol>
+        <li>Make sure you're using <strong>Chrome Stable v127+</strong> (you have v142, so ✅)</li>
+        <li>Try closing ALL Chrome windows and reopening</li>
+        <li>Check if you have enough disk space (~22GB free needed)</li>
+        <li>Try the test page without AI first: <a href="test-pdf-only.html">test-pdf-only.html</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    let checkedItems = 0;
+
+    function toggleCheck(element) {
+      element.classList.toggle('done');
+      if (element.classList.contains('done')) {
+        checkedItems++;
+      } else {
+        checkedItems--;
+      }
+
+      if (checkedItems === 8) {
+        recheckAI();
+      }
+    }
+
+    function markDone(index) {
+      const items = document.querySelectorAll('.checklist li');
+      if (items[index]) {
+        items[index].classList.add('done');
+        checkedItems++;
+      }
+    }
+
+    function copyTestCode() {
+      const code = document.getElementById('testCode').textContent;
+      navigator.clipboard.writeText(code);
+      event.target.textContent = '✅ Copied!';
+      setTimeout(() => {
+        event.target.textContent = '📋 Copy Code';
+      }, 2000);
+    }
+
+    async function recheckAI() {
+      const resultDiv = document.getElementById('recheckResult');
+      resultDiv.innerHTML = '<div style="padding: 15px; background: #e3f2fd; border-radius: 6px; color: #1565c0;">Checking...</div>';
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      try {
+        if (window.ai && window.ai.languageModel) {
+          const capabilities = await window.ai.languageModel.capabilities();
+
+          if (capabilities.available === 'readily') {
+            resultDiv.innerHTML = `
+              <div style="padding: 15px; background: #e8f5e9; border-radius: 6px; color: #2e7d32;">
+                <strong>✅ SUCCESS!</strong> Chrome AI is ready to use!
+              </div>
+            `;
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('currentStatus').className = 'status-box success';
+            document.getElementById('currentStatus').innerHTML = '✅ <strong>Chrome AI is Ready!</strong>';
+          } else if (capabilities.available === 'after-download') {
+            resultDiv.innerHTML = `
+              <div style="padding: 15px; background: #fff3cd; border-radius: 6px; color: #856404;">
+                <strong>⏳ AI Model Downloading</strong><br>
+                The Gemini Nano model is being downloaded. Wait 2-5 minutes and check again.
+              </div>
+            `;
+          } else {
+            resultDiv.innerHTML = `
+              <div style="padding: 15px; background: #ffebee; border-radius: 6px; color: #c62828;">
+                <strong>❌ AI Not Available</strong><br>
+                Status: ${capabilities.available}<br>
+                Make sure you enabled both flags and relaunched Chrome.
+              </div>
+            `;
+          }
+        } else {
+          resultDiv.innerHTML = `
+            <div style="padding: 15px; background: #ffebee; border-radius: 6px; color: #c62828;">
+              <strong>❌ window.ai is still undefined</strong><br>
+              <br>
+              This means the flags aren't enabled yet. Make sure to:
+              <ol style="margin-top: 10px;">
+                <li>Enable BOTH flags</li>
+                <li>Click the blue "Relaunch" button (don't just close Chrome)</li>
+                <li>Wait for Chrome to fully restart</li>
+              </ol>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="padding: 15px; background: #ffebee; border-radius: 6px; color: #c62828;">
+            <strong>❌ Error checking AI:</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Check status on load
+    window.addEventListener('load', async () => {
+      const statusBox = document.getElementById('currentStatus');
+
+      try {
+        if (window.ai && window.ai.languageModel) {
+          const capabilities = await window.ai.languageModel.capabilities();
+
+          if (capabilities.available === 'readily') {
+            statusBox.className = 'status-box success';
+            statusBox.innerHTML = '✅ <strong>Chrome AI is Ready!</strong> You can skip the steps below.';
+            document.getElementById('successMessage').style.display = 'block';
+          } else if (capabilities.available === 'after-download') {
+            statusBox.className = 'status-box checking';
+            statusBox.innerHTML = '⏳ <strong>AI Model is Downloading...</strong> Wait 2-5 minutes and refresh this page.';
+          } else {
+            statusBox.className = 'status-box error';
+            statusBox.innerHTML = '❌ <strong>Chrome AI Not Available</strong> - Follow the steps below.';
+          }
+        } else {
+          statusBox.className = 'status-box error';
+          statusBox.innerHTML = '❌ <strong>window.ai is undefined</strong> - Follow the steps below to enable it.';
+        }
+      } catch (error) {
+        statusBox.className = 'status-box error';
+        statusBox.innerHTML = '❌ <strong>Chrome AI Not Available</strong> - Follow the steps below.';
+      }
+    });
+  </script>
+</body>
+</html>

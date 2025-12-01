@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Improved PDF Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .upload-zone {
+      border: 3px dashed #667eea;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      background: white;
+      cursor: pointer;
+      margin: 20px 0;
+    }
+
+    .upload-zone:hover {
+      background: #f8f9fa;
+    }
+
+    .upload-zone.dragging {
+      background: #e3f2fd;
+      border-color: #2196f3;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .results {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-box .number {
+      font-size: 2em;
+      font-weight: bold;
+    }
+
+    .stat-box .label {
+      font-size: 0.9em;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      max-height: 500px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-weight: 500;
+    }
+
+    .status.info {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .page-section {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+
+    .page-section h3 {
+      margin-top: 0;
+      color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <h1>📄 Improved PDF Extraction Test</h1>
+
+  <div class="upload-zone" id="uploadZone">
+    <div style="font-size: 48px;">📄</div>
+    <p><strong>Drag & Drop a PDF here</strong></p>
+    <p style="color: #666; margin-top: 10px;">or click to browse</p>
+    <input type="file" id="fileInput" accept=".pdf">
+  </div>
+
+  <div id="status"></div>
+
+  <div id="results" style="display: none;">
+    <div class="results">
+      <h2>Extraction Details</h2>
+      <div class="stats" id="stats"></div>
+
+      <div id="pageDetails"></div>
+
+      <h3>Full Extracted Text:</h3>
+      <pre id="fullText"></pre>
+
+      <h3>Detected Information:</h3>
+      <pre id="detectedInfo"></pre>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Configure PDF.js
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragging');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragging');
+    });
+
+    uploadZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragging');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        await processFile(file);
+      }
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) await processFile(file);
+    });
+
+    async function processFile(file) {
+      showStatus(`Processing ${file.name}...`, 'info');
+
+      try {
+        const result = await extractTextFromPDF(file);
+        displayResults(result, file.name);
+        showStatus(`✅ Successfully extracted text from ${file.name}`, 'success');
+      } catch (error) {
+        showStatus(`❌ Error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    async function extractTextFromPDF(file) {
+      return new Promise(async (resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target.result;
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+            console.log(`PDF loaded: ${pdf.numPages} pages`);
+
+            let fullText = '';
+            let totalItems = 0;
+            const pageDetails = [];
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+              const page = await pdf.getPage(pageNum);
+              const textContent = await page.getTextContent();
+
+              const items = textContent.items;
+              totalItems += items.length;
+
+              // Better text concatenation - add newlines where Y position changes significantly
+              let pageText = '';
+              let lastY = null;
+
+              for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const currentY = item.transform[5]; // Y position
+
+                // Add newline if Y position changed significantly (new line)
+                if (lastY !== null && Math.abs(currentY - lastY) > 2) {
+                  pageText += '\n';
+                }
+
+                // Add space if not at start of line
+                if (lastY === currentY && pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
+                  pageText += ' ';
+                }
+
+                pageText += item.str;
+                lastY = currentY;
+              }
+
+              pageDetails.push({
+                pageNum,
+                items: items.length,
+                characters: pageText.length,
+                text: pageText
+              });
+
+              fullText += `\n\n========== PAGE ${pageNum} ==========\n\n${pageText}`;
+            }
+
+            resolve({
+              numPages: pdf.numPages,
+              totalItems,
+              totalCharacters: fullText.length,
+              fullText: fullText.trim(),
+              pageDetails
+            });
+
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.onerror = () => reject(new Error('Failed to read PDF'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function displayResults(result, filename) {
+      // Show stats
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-box">
+          <div class="number">${result.numPages}</div>
+          <div class="label">Pages</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">${result.totalItems.toLocaleString()}</div>
+          <div class="label">Text Items</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">${result.totalCharacters.toLocaleString()}</div>
+          <div class="label">Characters</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">${result.fullText.split(/\s+/).length.toLocaleString()}</div>
+          <div class="label">Words</div>
+        </div>
+      `;
+
+      // Show page details
+      let pageDetailsHTML = '<h3>Per-Page Breakdown:</h3>';
+      for (const page of result.pageDetails) {
+        pageDetailsHTML += `
+          <div class="page-section">
+            <h3>Page ${page.pageNum}</h3>
+            <p><strong>Text items:</strong> ${page.items} | <strong>Characters:</strong> ${page.characters.toLocaleString()}</p>
+            <p><strong>Preview (first 200 chars):</strong></p>
+            <pre style="font-size: 12px; max-height: 150px;">${page.text.substring(0, 200)}...</pre>
+          </div>
+        `;
+      }
+      document.getElementById('pageDetails').innerHTML = pageDetailsHTML;
+
+      // Show full text
+      document.getElementById('fullText').textContent = result.fullText;
+
+      // Detect basic info
+      const info = detectInfo(result.fullText);
+      document.getElementById('detectedInfo').textContent = JSON.stringify(info, null, 2);
+
+      // Show results
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function detectInfo(text) {
+      const emailMatch = text.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+      const phoneMatch = text.match(/[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}/);
+
+      const lines = text.split('\n').filter(l => l.trim());
+      const potentialName = lines[0] || '';
+
+      const urlMatches = text.match(/https?:\/\/[^\s]+/g) || [];
+      const linkedin = urlMatches.find(url => url.includes('linkedin')) || null;
+      const github = urlMatches.find(url => url.includes('github')) || null;
+
+      return {
+        name: potentialName,
+        email: emailMatch ? emailMatch[0] : null,
+        phone: phoneMatch ? phoneMatch[0] : null,
+        linkedin,
+        github,
+        hasExperience: text.toLowerCase().includes('experience'),
+        hasEducation: text.toLowerCase().includes('education'),
+        hasSkills: text.toLowerCase().includes('skills')
+      };
+    }
+
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+      statusDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

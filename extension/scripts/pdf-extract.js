@@ -29,10 +29,29 @@ async function extractTextFromPDF(arrayBuffer) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
 
-      // Concatenate text items
-      const pageText = textContent.items
-        .map(item => item.str)
-        .join(' ');
+      const items = textContent.items;
+
+      // Better text concatenation - add newlines where Y position changes
+      let pageText = '';
+      let lastY = null;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const currentY = item.transform[5]; // Y position
+
+        // Add newline if Y position changed significantly (new line)
+        if (lastY !== null && Math.abs(currentY - lastY) > 2) {
+          pageText += '\n';
+        }
+
+        // Add space if on same line but not at start
+        if (lastY === currentY && pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
+          pageText += ' ';
+        }
+
+        pageText += item.str;
+        lastY = currentY;
+      }
 
       fullText += pageText + '\n\n';
     }

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canary Setup Checker</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .alert {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .alert.error {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+    }
+
+    .alert.success {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      color: #2e7d32;
+    }
+
+    .alert.warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      color: #856404;
+    }
+
+    .alert.info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1565c0;
+    }
+
+    .step {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+    }
+
+    .step h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 10px 10px 10px 0;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn:hover {
+      background: #764ba2;
+    }
+
+    .btn-success {
+      background: #4caf50;
+    }
+
+    .btn-success:hover {
+      background: #388e3c;
+    }
+
+    .btn-large {
+      font-size: 18px;
+      padding: 20px 40px;
+    }
+
+    code {
+      background: #f4f4f4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+      font-size: 14px;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      margin: 10px 0;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      padding: 15px;
+      margin: 10px 0;
+      background: #f8f9fa;
+      border-left: 4px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .checklist li:hover {
+      background: #e9ecef;
+    }
+
+    .checklist li.done {
+      background: #e8f5e9;
+      border-left-color: #4caf50;
+    }
+
+    .checklist li::before {
+      content: "☐ ";
+      font-size: 20px;
+      margin-right: 10px;
+    }
+
+    .checklist li.done::before {
+      content: "✅ ";
+    }
+
+    .highlight {
+      background: yellow;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Chrome Canary Setup</h1>
+    <p class="subtitle">Let's make sure you're using Canary and it's configured correctly...</p>
+
+    <button class="btn btn-large" onclick="checkSetup()">🔍 Check My Setup</button>
+
+    <div id="results"></div>
+
+    <div id="instructions"></div>
+  </div>
+
+  <script>
+    async function checkSetup() {
+      const resultsDiv = document.getElementById('results');
+      const instructionsDiv = document.getElementById('instructions');
+
+      resultsDiv.innerHTML = '<div class="alert info">Checking...</div>';
+      instructionsDiv.innerHTML = '';
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const userAgent = navigator.userAgent;
+      const chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+      const chromeVersion = chromeMatch ? parseInt(chromeMatch[1]) : 0;
+
+      // Detect if we're in Canary
+      const isCanary = userAgent.includes('Canary') ||
+                       window.location.pathname.includes('Canary') ||
+                       navigator.userAgent.toLowerCase().includes('canary');
+
+      const hasAI = typeof window.ai !== 'undefined';
+
+      let html = '';
+      let instructions = '';
+
+      // Check 1: Are we in Canary?
+      html += '<h2 style="color: #333;">Diagnostic Results:</h2>';
+
+      if (isCanary || chromeVersion >= 130) {
+        html += `
+          <div class="alert success">
+            ✅ <strong>Browser Check:</strong><br>
+            You're likely in Chrome Canary (version ${chromeVersion})
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="alert error">
+            ❌ <strong>Wrong Browser!</strong><br>
+            You're in Chrome Stable (version ${chromeVersion}), not Canary!<br><br>
+            <strong>This is the problem!</strong> You need to open these test pages in <span class="highlight">Chrome Canary</span>, not Chrome Stable.
+          </div>
+        `;
+
+        instructions = `
+          <div class="step">
+            <h3>🎯 Fix: Open This Page in Chrome Canary</h3>
+            <p><strong>You're currently viewing this in Chrome Stable. You need to use Chrome Canary instead.</strong></p>
+
+            <h4>Do This Now:</h4>
+            <ol>
+              <li><strong>Quit this browser completely</strong> (Cmd+Q)</li>
+              <li><strong>Find Chrome Canary</strong> in your Applications folder:<br>
+                <code>/Applications/Google Chrome Canary.app</code>
+              </li>
+              <li><strong>Open Chrome Canary</strong> (it has a yellow/gold icon 🟡)</li>
+              <li><strong>Drag this folder to Canary:</strong><br>
+                <code>${window.location.pathname.split('/').slice(0, -1).join('/')}</code>
+              </li>
+              <li><strong>Open this file:</strong> <code>canary-setup.html</code></li>
+            </ol>
+
+            <p style="margin-top: 20px;"><strong>Or copy this path and paste it into Canary's address bar:</strong></p>
+            <pre>file://${window.location.pathname}</pre>
+          </div>
+        `;
+
+        resultsDiv.innerHTML = html;
+        instructionsDiv.innerHTML = instructions;
+        return;
+      }
+
+      // Check 2: Does window.ai exist?
+      if (hasAI) {
+        html += '<div class="alert success">✅ <strong>window.ai exists!</strong></div>';
+
+        // Check 3: Can we access AI?
+        try {
+          const capabilities = await window.ai.languageModel.capabilities();
+
+          if (capabilities.available === 'readily') {
+            html += `
+              <div class="alert success">
+                🎉 <strong>Chrome AI is READY!</strong><br><br>
+                Everything is working perfectly. You can now use the resume parser with full AI capabilities!
+              </div>
+            `;
+
+            instructions = `
+              <div class="step" style="background: #e8f5e9; border-left-color: #4caf50;">
+                <h3 style="color: #2e7d32;">🎉 Success! What's Next?</h3>
+                <p><strong>Your Chrome Canary is fully set up with AI.</strong></p>
+                <a href="test-parser.html" class="btn btn-success btn-large">🧪 Test Resume Parser with AI</a>
+              </div>
+            `;
+
+          } else if (capabilities.available === 'after-download') {
+            html += `
+              <div class="alert warning">
+                ⏳ <strong>AI Model is Downloading</strong><br><br>
+                Status: ${capabilities.available}<br>
+                The Gemini Nano model (~1.5GB) is downloading in the background.<br><br>
+                <strong>Wait 2-5 minutes</strong> and then check again.
+              </div>
+            `;
+
+            instructions = `
+              <div class="step">
+                <h3>⏳ What to Do While Waiting</h3>
+                <p><strong>The AI model is downloading. Here are your options:</strong></p>
+                <ol>
+                  <li><strong>Wait 2-5 minutes</strong> and click "Check My Setup" again</li>
+                  <li><strong>Test PDF extraction without AI</strong> (works now):
+                    <br><a href="test-pdf-only.html" class="btn" style="margin-top: 10px;">Test PDF Extraction</a>
+                  </li>
+                  <li><strong>Keep Canary open</strong> - it downloads in the background</li>
+                </ol>
+                <button class="btn" onclick="checkSetup()" style="margin-top: 15px;">🔄 Check Again Now</button>
+              </div>
+            `;
+
+          } else {
+            html += `
+              <div class="alert error">
+                ❌ <strong>AI Not Available</strong><br>
+                Status: ${capabilities.available}
+              </div>
+            `;
+          }
+
+        } catch (error) {
+          html += `
+            <div class="alert error">
+              ❌ <strong>Error accessing AI:</strong><br>
+              ${error.message}
+            </div>
+          `;
+        }
+
+      } else {
+        // window.ai doesn't exist in Canary - flags not enabled
+        html += `
+          <div class="alert error">
+            ❌ <strong>window.ai is undefined</strong><br><br>
+            You're in Canary, but the flags aren't enabled yet.
+          </div>
+        `;
+
+        instructions = `
+          <div class="step">
+            <h3>🔧 Enable Flags in Canary</h3>
+            <p><strong>You need to enable the AI flags IN CANARY (not Stable).</strong></p>
+
+            <h4>Follow These Steps:</h4>
+            <ol>
+              <li><strong>Make sure you're in Chrome Canary</strong> (yellow icon 🟡)</li>
+              <li><strong>Open a new tab in Canary</strong> and paste this:<br>
+                <code style="display: block; margin: 10px 0; padding: 10px; background: #1e1e1e; color: #4caf50;">chrome://flags/#prompt-api-for-gemini-nano</code>
+              </li>
+              <li><strong>Change dropdown to:</strong> <code>Enabled</code></li>
+              <li><strong>Open another tab in Canary</strong> and paste:<br>
+                <code style="display: block; margin: 10px 0; padding: 10px; background: #1e1e1e; color: #4caf50;">chrome://flags/#optimization-guide-on-device-model</code>
+              </li>
+              <li><strong>Change dropdown to:</strong> <code>Enabled BypassPerfRequirement</code></li>
+              <li><strong>IMPORTANT:</strong> Scroll to bottom and click the <span class="highlight">blue "Relaunch" button</span></li>
+              <li><strong>Wait 2-5 minutes</strong> after Canary relaunches</li>
+              <li><strong>Come back here</strong> and check again</li>
+            </ol>
+          </div>
+
+          <div class="step" style="background: #fff3cd; border-left-color: #ffc107;">
+            <h3>⚠️ Common Mistakes</h3>
+            <ul>
+              <li><strong>Enabling flags in Chrome Stable instead of Canary</strong> - Won't work!</li>
+              <li><strong>Not clicking the Relaunch button</strong> - Just closing doesn't work!</li>
+              <li><strong>Opening test pages in Stable instead of Canary</strong> - Make sure you're in Canary!</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      resultsDiv.innerHTML = html;
+      instructionsDiv.innerHTML = instructions;
+    }
+
+    // Auto-run on load
+    window.addEventListener('load', () => {
+      setTimeout(checkSetup, 500);
+    });
+
+    function toggleCheck(element) {
+      element.classList.toggle('done');
+    }
+  </script>
+</body>
+</html>
